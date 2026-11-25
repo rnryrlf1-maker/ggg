@@ -55,7 +55,13 @@
 <div class="field"><label for="fund">연금개시 적립금 (만원)</label><div class="fieldbox"><input id="fund" type="number" min="0" step="100" value="28400"><span class="suffix">만원</span></div><div class="quick"><button type="button" data-amt="10000">1억원</button><button type="button" data-amt="20000">2억원</button><button type="button" data-amt="30000">3억원</button></div></div>
 <div class="form-row"><div class="field"><label for="annualRate">가정 연 공시이율 (%)</label><div class="fieldbox"><input id="annualRate" type="number" min="0" max="30" step="0.01" value="2.52"><span class="suffix">%</span></div></div><div class="field"><label for="principal">기존 납입보험료 (만원)</label><div class="fieldbox"><input id="principal" type="number" min="0" step="100" value="18000"><span class="suffix">만원</span></div></div></div>
 <div class="section"><h3>은퇴 고객의 기존 소득</h3>
-<div class="field"><label for="nationalPension">국민연금 월 수령액 (만원)</label><div class="fieldbox"><input id="nationalPension" type="number" min="0" step="10" value="120"><span class="suffix">만원 / 월</span></div></div>
+<div class="field"><label for="publicType">공적연금 종류 (본인 기준)</label><select id="publicType"><option value="국민연금">국민연금</option><option value="군인연금">군인연금 (퇴역연금)</option><option value="공무원연금">공무원연금 (퇴직연금)</option><option value="사학연금">사학연금 (퇴직연금)</option><option value="기타 공적연금">기타 공적연금</option></select></div>
+<div class="field"><label for="nationalPension">공적연금 월 세전 수령액 (만원)</label><div class="fieldbox"><input id="nationalPension" type="number" min="0" step="10" value="120"><span class="suffix">만원 / 월</span></div></div>
+<div class="field"><label for="taxMode">과세 대상 연금액 산정 방식</label><select id="taxMode"><option value="ratio">과세 비율 직접 입력</option><option value="amount">과세 대상 연금액 직접 입력 (권장)</option><option value="months">기여금 납부월수로 추정 (군인 등 직역연금)</option></select></div>
+<div id="ratioFields"><div class="field"><label for="taxableRatio">공적연금 과세 대상 비율 (%)</label><div class="fieldbox"><input id="taxableRatio" type="number" min="0" max="100" step="0.01" value="100"><span class="suffix">%</span></div><div class="caption">100%는 보수적 가정입니다. 2002년 이전 기간 등에 해당하는 비과세액은 제외합니다.</div></div></div>
+<div id="amountFields" class="hidden"><div class="field"><label for="taxableAmount">연간 과세 대상 연금액 (만원)</label><div class="fieldbox"><input id="taxableAmount" type="number" min="0" step="1" placeholder="원천징수영수증상 금액"><span class="suffix">만원/년</span></div><div class="caption">공적연금 원천징수영수증의 과세 대상 총연금액을 입력합니다. 연금소득공제 전 금액입니다.</div></div></div>
+<div id="monthsFields" class="hidden"><div class="form-row"><div class="field"><label for="totalMonths">총 기여금 납부월수</label><div class="fieldbox"><input id="totalMonths" type="number" min="0" step="1" placeholder="예: 396"><span class="suffix">개월</span></div></div><div class="field"><label for="postMonths">2002년 이후 납부월수</label><div class="fieldbox"><input id="postMonths" type="number" min="0" step="1" placeholder="예: 288"><span class="suffix">개월</span></div></div></div><div class="caption">군인연금: 전체 기여금 납부월수 중 2002년 이후 납부월수 비율을 적용합니다. 실제 기여금 기록 기준이며 국민연금에는 이 방식이 정확하지 않습니다.</div></div>
+<div class="deemed-result"><div><span>과세 대상 연금액 (연간)</span><strong id="publicTaxablePreview">—</strong></div><p id="publicTaxHint"></p></div>
 <div class="field"><label for="otherFin">예금이자·배당 등 금융소득 (만원/년)</label><div class="fieldbox"><input id="otherFin" type="number" min="0" step="100" value="500"><span class="suffix">만원 / 년</span></div></div>
 <div class="field"><label for="rentType">임대 유형·세금 방식</label><select id="rentType">
 <option value="houseSeparate">주택임대 · 분리과세(미등록 가정)</option>
@@ -89,34 +95,36 @@
 </div>
 <div class="section"><h3>건강보험 가입 유형</h3><div class="field"><select id="nhisType"><option value="region" selected>지역가입자</option><option value="employee">직장가입자 (보수 외 소득분만)</option><option value="dependent">피부양자 (자격 상실 별도 확인)</option><option value="none">건강보험료 계산 제외</option></select></div></div>
 <details class="details-advanced"><summary>세부 가정 · 공제 조정</summary>
-<div class="field"><label for="taxableRatio">국민연금 중 과세대상 비율 (%)</label><div class="fieldbox"><input id="taxableRatio" type="number" min="0" max="100" step="1" value="100"><span class="suffix">%</span></div></div>
-<div class="field"><label for="deductions">기본·추가 인적공제 합계 (만원/년)</label><div class="fieldbox"><input id="deductions" type="number" min="0" step="50" value="150"><span class="suffix">만원 / 년</span></div></div>
+
+<div class="field"><label for="deductions">기본·추가 인적공제 합계 (만원/년)</label><div class="fieldbox"><input id="deductions" type="number" min="0" step="50" value="150"><span class="suffix">만원 / 년</span></div><div class="caption">본인 150만원, 배우자·부양가족은 공제요건 충족 시 각 150만원을 추가 입력. 기본·추가공제 합계만 입력합니다.</div></div>
+<div class="field"><label for="taxCredit">종합소득세 세액공제 (만원/년)</label><div class="fieldbox"><input id="taxCredit" type="number" min="0" step="1" value="7"><span class="suffix">만원/년</span></div><div class="caption">근로소득 없는 연금수급자 표준세액공제 7만원 가정. 실제 적용 가능한 세액공제 합계로 수정하세요.</div></div>
+<div class="field"><label for="propertyHealth">지역가입자 재산분 건강보험료 (원/월)</label><div class="fieldbox"><input id="propertyHealth" type="number" min="0" step="1000" value="0"><span class="suffix">원/월</span></div><div class="caption">공단에서 확인한 재산분 건강보험료만 입력 (장기요양보험료 제외). 미입력 시 재산분 제외.</div></div>
 <div class="field"><label for="otherHealth">직장가입자 다른 보수 외 소득 (만원/년)</label><div class="fieldbox"><input id="otherHealth" type="number" min="0" step="100" value="0"><span class="suffix">만원 / 년</span></div></div>
-<div class="miniinfo">국민연금의 실제 과세대상액은 2002년 이전 가입기간 등 계약·수급 이력에 따라 다릅니다. 원천징수, 세액공제, 임대주택의 과세대상 여부, 임대기간·명의·금융수익 차감, 건강보험 재산분 등은 이 계산에 정확히 반영되지 않습니다.</div>
+<div class="miniinfo">공적연금의 실제 과세대상액은 2002년 이전 가입기간 등 수급 이력에 따라 다릅니다. 원천징수영수증을 우선하세요. 세액공제·재산분 보험료는 입력값으로 반영하며, 임대주택의 과세대상 여부, 임대기간·명의·금융수익 차감 등은 실제와 다를 수 있습니다.</div>
 </details>
 </aside>
 <section class="results"><div class="heading"><h2>전체 은퇴소득 세후 비교</h2><small>모든 금액은 월평균 추정액</small></div>
 <div class="seg" id="period"><button type="button" data-years="10" aria-pressed="true">10년 확정형</button><button type="button" data-years="15" aria-pressed="false">15년 확정형</button><button type="button" data-years="20" aria-pressed="false">20년 확정형</button></div>
 <div class="summary"><div class="summary-top"><div class="stat"><div class="k">개인연금 월 세전 연금액</div><div class="v" id="grossPension">—</div></div><div class="stat"><div class="k">기존 소득 월평균 세전합계*</div><div class="v" id="existingGross">—</div></div><div class="stat"><div class="k">개인연금 포함 월 총 세전소득*</div><div class="v" id="allGross">—</div></div></div><div class="caption">* 임대소득은 실제 필요경비율 차감 후 금액으로 계산. 소득세·건강보험료 공제 전.</div></div>
 <div class="two-cards"><article class="card exempt"><div class="card-header"><h3>비과세 연금</h3><span class="badge">보험차익 비과세 가정</span></div><div class="eyebrow">월 전체 은퇴소득 실수령 추정액</div><div class="big" id="exemptNet">—</div><div class="rows">
-<div class="row"><span>국민연금 · 금융 · 임대 · 개인연금 합계</span><strong id="exemptGross">—</strong></div>
+<div class="row"><span>공적연금 · 금융 · 임대 · 개인연금 합계</span><strong id="exemptGross">—</strong></div>
 <div class="row"><span>전체 추정 소득세 (지방세 포함)</span><strong class="negative" id="exemptTax">—</strong></div>
-<div class="row"><span>전체 추정 소득분 건강·요양보험료</span><strong class="negative" id="exemptHealth">—</strong></div>
+<div class="row"><span>전체 추정 건강·요양보험료</span><strong class="negative" id="exemptHealth">—</strong></div>
 <div class="row total"><span>새 연금으로 인한 추가 세금·보험료</span><strong id="exemptExtra">0원</strong></div><div class="row sum-total"><span>선택기간 전체 실수령액 합계*</span><strong id="exemptTotal">—</strong></div>
 </div></article>
 <article class="card taxable"><div class="card-header"><h3>과세 연금</h3><span class="badge">보험차익 이자소득 과세 가정</span></div><div class="eyebrow">월 전체 은퇴소득 실수령 추정액</div><div class="big" id="taxNet">—</div><div class="rows">
-<div class="row"><span>국민연금 · 금융 · 임대 · 개인연금 합계</span><strong id="taxGross">—</strong></div>
+<div class="row"><span>공적연금 · 금융 · 임대 · 개인연금 합계</span><strong id="taxGross">—</strong></div>
 <div class="row"><span>전체 추정 소득세 (지방세 포함)</span><strong class="negative" id="taxTax">—</strong></div>
-<div class="row"><span>전체 추정 소득분 건강·요양보험료</span><strong class="negative" id="taxHealth">—</strong></div>
+<div class="row"><span>전체 추정 건강·요양보험료</span><strong class="negative" id="taxHealth">—</strong></div>
 <div class="row total"><span>새 연금으로 인한 추가 세금·보험료</span><strong id="taxExtra">—</strong></div><div class="row sum-total"><span>선택기간 전체 실수령액 합계*</span><strong id="taxTotal">—</strong></div>
 </div></article></div>
 <div class="difference">
   <div class="difference-line"><div><b>비과세 선택 시 월 실수령액 차이</b><div class="caption">과세 연금 대비 매월 더 받는 금액</div></div><div class="value" id="delta">—</div></div>
   <div class="difference-line difference-total"><div><b id="deltaTotalTitle">10년간 누적 실수령액 차이</b><div class="caption">월 차액 × 선택한 확정형 지급개월 수 (동일 소득·세율 유지 가정)</div></div><div class="value" id="deltaTotal">—</div></div>
 </div>
-<div class="detail"><h3>기존 소득과 추가 부담 요약</h3><div class="detail-grid"><div class="detailcell"><small>기존 국민연금 월 수령</small><b id="detailPublic">—</b></div><div class="detailcell"><small>기존 금융소득 월평균</small><b id="detailFin">—</b></div><div class="detailcell"><small>임대 실제 순수입 월평균</small><b id="detailRent">—</b></div><div class="detailcell"><small>연간 추정 간주임대료 (현금수입 제외)</small><b id="detailDeemed">—</b></div><div class="detailcell"><small>기존 소득세 월평균 추정</small><b id="detailBaseTax">—</b></div><div class="detailcell"><small>기존 소득분 건보·요양 월 추정</small><b id="detailBaseHealth">—</b></div><div class="detailcell"><small>과세 시 월 추가 종합소득세*</small><b id="detailAdditional">—</b></div></div><p class="caption">* 과세 연금 차익 원천징수 15.4%를 초과하여 발생하는 추가 세금(금융소득 비교과세 가정). 위 전체 기간 합계는 기존 국민연금·금융·임대소득도 선택기간 내내 변하지 않는다고 가정한 금액입니다.</p></div>
+<div class="detail"><h3>기존 소득과 추가 부담 요약</h3><div class="detail-grid"><div class="detailcell"><small>기존 공적연금 월 세전 수령</small><b id="detailPublic">—</b></div><div class="detailcell"><small>공적연금 연 과세 대상액</small><b id="detailPublicTaxable">—</b></div><div class="detailcell"><small>공적연금 연 소득공제</small><b id="detailPublicDeduction">—</b></div><div class="detailcell"><small>재산분 건보·요양 월 합계</small><b id="detailPropertyHealth">—</b></div><div class="detailcell"><small>기존 금융소득 월평균</small><b id="detailFin">—</b></div><div class="detailcell"><small>임대 실제 순수입 월평균</small><b id="detailRent">—</b></div><div class="detailcell"><small>연간 추정 간주임대료 (현금수입 제외)</small><b id="detailDeemed">—</b></div><div class="detailcell"><small>기존 소득세 월평균 추정</small><b id="detailBaseTax">—</b></div><div class="detailcell"><small>기존 건보·요양 월 추정</small><b id="detailBaseHealth">—</b></div><div class="detailcell"><small>과세 시 월 추가 종합소득세*</small><b id="detailAdditional">—</b></div></div><p class="caption">* 과세 연금 차익 원천징수 15.4%를 초과하여 발생하는 추가 세금(금융소득 비교과세 가정). 위 전체 기간 합계는 기존 공적연금·금융·임대소득도 선택기간 내내 변하지 않는다고 가정한 금액입니다.</p></div>
 <div id="status" class="alert" role="status"></div>
-<p class="method">계산 안내: 공시이율이 전 기간 일정하고 월말에 연금을 받는 단순 확정형 연금모형입니다. 보험차익은 전체 지급기간에 균등하게 귀속된 것으로 가정하며, 실제 세법상 귀속·원천징수 시점, 상품의 사업비·위험보험료, 연금지급비용, 보장조건에 따라 다를 수 있습니다. 건강보험료는 <b>소득분만</b> 추정하며 재산분·최저보험료·피부양자 탈락 후 보험료는 계산하지 않습니다. <b>전체기간 합계·누적 차이는 국민연금·임대·금융소득, 공시이율, 과세기준, 건강보험료율이 선택기간 내내 일정하다는 단순 가정</b>으로 계산하며 미래 실제 수령 총액과 다를 수 있습니다. <a href="https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7686" target="_blank" rel="noopener noreferrer">국세청 주택임대 안내</a> · <a href="https://www.nhis.or.kr" target="_blank" rel="noopener noreferrer">국민건강보험공단</a></p>
+<p class="method">계산 안내: 공시이율이 전 기간 일정하고 월말에 연금을 받는 단순 확정형 연금모형입니다. 보험차익은 전체 지급기간에 균등하게 귀속된 것으로 가정하며, 실제 세법상 귀속·원천징수 시점, 상품의 사업비·위험보험료, 연금지급비용, 보장조건에 따라 다를 수 있습니다. 건강보험료는 <b>소득분과 직접 입력한 재산분</b>을 추정하며 최저보험료·세대원 소득·피부양자 탈락 후 보험료는 계산하지 않습니다. 공적연금은 소득세 계산 시 과세 대상액, 건강보험료 계산 시 총액을 사용합니다. 유족·장애·상이연금 등은 별도 산정 대상입니다. <a href="https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7888" target="_blank" rel="noopener">국세청 연금소득</a> · <a href="https://www.geps.or.kr/bizInformation_pensionBiz_pensionReceipt_incomeTax" target="_blank" rel="noopener">공무원연금 과세 안내</a> ·  <b>전체기간 합계·누적 차이는 공적연금·임대·금융소득, 공시이율, 과세기준, 건강보험료율이 선택기간 내내 일정하다는 단순 가정</b>으로 계산하며 미래 실제 수령 총액과 다를 수 있습니다. <a href="https://www.nts.go.kr/nts/cm/cntnts/cntntsView.do?cntntsId=7686" target="_blank" rel="noopener noreferrer">국세청 주택임대 안내</a> · <a href="https://www.nhis.or.kr" target="_blank" rel="noopener noreferrer">국민건강보험공단</a></p>
 <div class="print-actions"><button type="button" id="copy">현재 결과 복사</button><button class="primary" type="button" id="print">인쇄 / PDF 저장</button></div>
 </section></div></main>
 <script>
@@ -129,10 +137,10 @@ const compact=x=>{const v=Math.round(x);if(Math.abs(v)>=1e8)return (v/1e8).toLoc
 const rates=[[14e6,.06],[50e6,.15],[88e6,.24],[150e6,.35],[300e6,.38],[500e6,.40],[1e9,.42],[Infinity,.45]];
 function progressive(base){let n=Math.max(0,base),prev=0,sum=0;for(const [max,r] of rates){if(n<=prev)break;sum+=(Math.min(n,max)-prev)*r;prev=max;}return sum}
 function publicDeduction(ann){let a=Math.max(0,ann),d=a<=3.5e6?a:a<=7e6?3.5e6+(a-3.5e6)*.4:a<=14e6?4.9e6+(a-7e6)*.2:6.3e6+(a-14e6)*.1;return Math.min(9e6,d)}
-// Income tax estimate, before tax credits and after finance comparison tax, including 10% local tax.
-function annualIncomeTax(otherBase,finance){const f=Math.max(0,finance);if(f<=20e6)return (progressive(otherBase)+f*.14)*1.1;
+// Income tax estimate, with adjustable tax credit and finance comparison tax, including 10% local tax.
+function annualIncomeTax(otherBase,finance,credit=0){const f=Math.max(0,finance);if(f<=20e6)return (Math.max(0,progressive(otherBase)-credit)+f*.14)*1.1;
 const standard=progressive(otherBase+f-20e6)+20e6*.14;
-const withholdingComparison=progressive(otherBase)+f*.14;return Math.max(standard,withholdingComparison)*1.1}
+const withholdingComparison=progressive(otherBase)+f*.14;return Math.max(0,Math.max(standard,withholdingComparison)-credit)*1.1}
 const HEALTH=.0719,LTC=.009448;
 function healthInsurance(annualPub,annualFin,annualRent,mode,other){
  if(mode==='none')return {health:0,ltc:0,limited:true};
@@ -216,23 +224,32 @@ let lastReport='';
 function calc(){
  const fund=val('fund')*1e4,rate=val('annualRate',0,30)/100,principal=val('principal')*1e4;
  const nat=val('nationalPension')*1e4*12,fin=val('otherFin')*1e4;
- const taxableNat=nat*val('taxableRatio',0,100)/100;
+ const pmode=$('taxMode').value,pubType=$('publicType').value;
+ const totalMonths=val('totalMonths'),postMonths=val('postMonths');
+ let pensionWarning='',ratio=val('taxableRatio',0,100)/100;
+ if(pmode==='amount'){if($('taxableAmount').value===''){ratio=1;pensionWarning='과세 대상 연금액 미입력: 일단 100% 과세 가정.'}else {const typed=val('taxableAmount')*1e4;ratio=nat>0?Math.min(1,typed/nat):0;if(typed>nat)pensionWarning='과세 대상 연금액이 총연금액을 초과하여 총연금액으로 제한했습니다.'}}
+ if(pmode==='months'){if(totalMonths<=0||$('postMonths').value===''){ratio=1;pensionWarning='기여금 납부월수 미입력: 일단 100% 과세 가정.'}else {ratio=Math.min(1,postMonths/totalMonths);if(postMonths>totalMonths)pensionWarning='2002년 이후 납부월수가 총 납부월수를 초과하여 100%로 제한했습니다.'}if(pubType==='국민연금')pensionWarning+=' 국민연금은 납부월수 단순비율이 정확하지 않으므로 실제 과세액 직접 입력을 권장합니다.'}
+ const taxableNat=nat*ratio;
+ $('publicTaxablePreview').textContent=won(taxableNat);
+ $('publicTaxHint').textContent='과세 비율 '+(ratio*100).toFixed(2)+'% · 비과세/과세제외 연 '+won(nat-taxableNat)+' · '+(pensionWarning||'건강보험료는 과세 비율과 별개로 공적연금 총액 기준 산정');
  const pensionIncome=Math.max(0,taxableNat-publicDeduction(taxableNat));
- const deduction=val('deductions')*1e4;
+ const deduction=val('deductions')*1e4,credit=val('taxCredit')*1e4,propertyHealth=$('nhisType').value==='region'?val('propertyHealth'):0;
  const rent=rentData(pensionIncome,fin), nhis=$('nhisType').value,extra=val('otherHealth')*1e4;
  const nonfinBase=Math.max(0,pensionIncome+rent.otherBase-deduction);
  const period=years*12,r=Math.pow(1+rate,1/12)-1;
  const monthlyPension=rate>0?fund*r/(1-Math.pow(1+r,-period)):fund/period;
  const total=monthlyPension*period;
  const annualGain=Math.max(0,total-principal)/years; // average approximation, never quote actual taxable-year interest
- const beforeTax=annualIncomeTax(nonfinBase,fin)+rent.separateTax;
- const afterTax=annualIncomeTax(nonfinBase,fin+annualGain)+rent.separateTax;
+ const beforeTax=annualIncomeTax(nonfinBase,fin,credit)+rent.separateTax;
+ const rentAfter=rentData(pensionIncome,fin+annualGain);
+ const afterTax=annualIncomeTax(Math.max(0,pensionIncome+rentAfter.otherBase-deduction),fin+annualGain,credit)+rentAfter.separateTax;
  const beforeHealth=healthInsurance(nat,fin,rent.insuranceIncome,nhis,extra);
  const afterHealth=healthInsurance(nat,fin+annualGain,rent.insuranceIncome,nhis,extra);
  const oldInc=(nat+fin+rent.netCash)/12, allGross=oldInc+monthlyPension;
  const beforeTaxMon=beforeTax/12,afterTaxMon=afterTax/12;
- const beforeHealthMon=(beforeHealth.health+beforeHealth.ltc)/12;
- const afterHealthMon=(afterHealth.health+afterHealth.ltc)/12;
+ const propertyTotal=propertyHealth*(1+LTC/HEALTH);
+ const beforeHealthMon=(beforeHealth.health+beforeHealth.ltc)/12+propertyTotal;
+ const afterHealthMon=(afterHealth.health+afterHealth.ltc)/12+propertyTotal;
  const netEx=allGross-beforeTaxMon-beforeHealthMon, netTx=allGross-afterTaxMon-afterHealthMon;
  const extraTax=Math.max(0,afterTax-beforeTax)/12, extraHealth=Math.max(0,afterHealthMon-beforeHealthMon);
  const withheld=annualGain*.154/12, additionalTax=Math.max(0,extraTax-withheld);
@@ -242,7 +259,7 @@ function calc(){
  put('exemptNet',netEx);put('exemptGross',allGross);put('exemptTax',beforeTaxMon);put('exemptHealth',beforeHealthMon);put('exemptExtra',0);
  put('taxNet',netTx);put('taxGross',allGross);put('taxTax',afterTaxMon);put('taxHealth',afterHealthMon);put('taxExtra',extraTax+extraHealth);
  put('delta',netEx-netTx);put('deltaTotal',(netEx-netTx)*period);put('exemptTotal',netEx*period);put('taxTotal',netTx*period);$('deltaTotalTitle').textContent=`${years}년간 누적 실수령액 차이`;put('detailPublic',nat/12);put('detailFin',fin/12);put('detailRent',rent.netCash/12);put('detailDeemed',rent.deemed);
- put('detailBaseTax',beforeTaxMon);put('detailBaseHealth',beforeHealthMon);put('detailAdditional',additionalTax);
+ put('detailPublicTaxable',taxableNat);put('detailPublicDeduction',publicDeduction(taxableNat));put('detailPropertyHealth',propertyTotal);put('detailBaseTax',beforeTaxMon);put('detailBaseHealth',beforeHealthMon);put('detailAdditional',additionalTax);
  for(const b of document.querySelectorAll('[data-years]')) b.setAttribute('aria-pressed',String(Number(b.dataset.years)===years));
  for(const b of document.querySelectorAll('[data-amt]'))b.classList.toggle('active',Number(b.dataset.amt)===val('fund'));
  const finAfter=fin+annualGain;
@@ -250,19 +267,20 @@ function calc(){
  if(rent.receipt>0)messages.push(`임대 월세수입 연 ${compact(rent.monthlyIncome)} + 간주임대료 연 ${compact(rent.deemed)} (세금 계산용), 실제 경비 차감 후 임대 현금소득 ${compact(rent.netCash)}를 포함했습니다.`);
  messages.push(...rent.warning);
  if(nhis==='dependent')messages.push('피부양자 자격 상실 여부에 따라 추가 건보료가 크게 달라질 수 있습니다. 화면의 건강보험료 0원은 자격 유지 가정입니다.');
- else if(nhis==='region')messages.push('지역가입자 건강보험료는 소득분만 추정했고 재산분·최저보험료 등은 빠져 있습니다.');
+ else if(nhis==='region')messages.push('지역가입자 건강보험료는 소득분과 입력한 재산분을 반영합니다. 최저보험료·세대원 소득·경감 등은 별도 확인이 필요합니다.');
  else if(nhis==='employee')messages.push('직장가입자는 보수 외 소득 관련 보험료만 추정하며 기존 보수에 대한 보험료는 포함하지 않습니다.');
  else messages.push('건강보험료 계산을 제외했습니다.');
- messages.push('국민연금액을 바꾸면 기본 연금소득세 및 소득분 건강보험료가 변경되어 전체 세후 수령액이 함께 바뀝니다.');
- $('status').textContent=messages.join('  ·  ');$('status').classList.toggle('warning',!!rent.warning.length||nhis==='dependent');
+ messages.push(pubType+' 연 과세 대상액 '+won(taxableNat)+' / 과세 비율 '+(ratio*100).toFixed(2)+'%. '+(pensionWarning||'실제 과세 대상 금액은 원천징수영수증으로 확인하세요.'));
+ $('status').textContent=messages.join('  ·  ');$('status').classList.toggle('warning',!!rent.warning.length||nhis==='dependent'||!!pensionWarning);
  $('rentTypeHint').textContent=rent.receipt>20e6 && ['houseSeparate','houseRegistered'].includes(rent.choice)?'연 임대수입 2,000만원 초과이므로 계산은 종합과세로 자동 전환됩니다.':'주택임대 수입 연 2,000만원 이하에서 분리과세 선택 가능 (과세대상 주택 여부 별도 확인)';
- lastReport=`신한라이프 은퇴소득 연금 비교 (추정)\n${years}년 확정형, 공시이율 ${(rate*100).toFixed(2)}%\n국민연금 월 ${won(nat/12)} / 다른 금융소득 연 ${won(fin)} / 임대 월 순수입 ${won(rent.netCash/12)} / 임대 간주임대료 연 ${won(rent.deemed)}\n개인연금 월 세전 ${won(monthlyPension)}\n비과세 전체 월 실수령액 ${won(netEx)}\n과세 전체 월 실수령액 ${won(netTx)}\n비과세 효과 월 ${won(netEx-netTx)}\n선택기간 ${years}년 누적 차액 ${won((netEx-netTx)*period)}\n비과세 전체기간 실수령 합계 ${won(netEx*period)}\n과세 전체기간 실수령 합계 ${won(netTx*period)}\n세금·건보료는 추정, 재산분 등 제외`;
+ lastReport=`신한라이프 은퇴소득 연금 비교 (추정)\n${years}년 확정형, 공시이율 ${(rate*100).toFixed(2)}%\n${pubType} 월 ${won(nat/12)} (과세 대상 연 ${won(taxableNat)}) / 다른 금융소득 연 ${won(fin)} / 임대 월 순수입 ${won(rent.netCash/12)} / 임대 간주임대료 연 ${won(rent.deemed)}\n개인연금 월 세전 ${won(monthlyPension)}\n비과세 전체 월 실수령액 ${won(netEx)}\n과세 전체 월 실수령액 ${won(netTx)}\n비과세 효과 월 ${won(netEx-netTx)}\n선택기간 ${years}년 누적 차액 ${won((netEx-netTx)*period)}\n비과세 전체기간 실수령 합계 ${won(netEx*period)}\n과세 전체기간 실수령 합계 ${won(netTx*period)}\n세금·건보료는 추정, 입력 재산분 월 ${won(propertyTotal)} 포함; 최저보험료 등 제외`;
  return result;
 }
+function renderTaxMode(){const mode=$('taxMode').value;for(const [id,m] of [['ratioFields','ratio'],['amountFields','amount'],['monthsFields','months']])$(id).classList.toggle('hidden',mode!==m)}
 function renderRentalType(){const commercial=$('rentType').value==='commercial';$('houseRentalFields').classList.toggle('hidden',commercial);$('commercialRentalFields').classList.toggle('hidden',!commercial)}
-for(const el of document.querySelectorAll('input,select')){el.addEventListener('input',()=>{if(el.id==='rentType')renderRentalType();calc()});el.addEventListener('change',()=>{if(el.id==='rentType')renderRentalType();calc()})}
+for(const el of document.querySelectorAll('input,select')){el.addEventListener('input',()=>{if(el.id==='rentType')renderRentalType();if(el.id==='taxMode')renderTaxMode();calc()});el.addEventListener('change',()=>{if(el.id==='rentType')renderRentalType();if(el.id==='taxMode')renderTaxMode();calc()})}
 $('addHouse').addEventListener('click',()=>addHouseRow());
-addHouseRow();renderRentalType();
+addHouseRow();renderRentalType();renderTaxMode();
 for(const btn of document.querySelectorAll('[data-years]'))btn.addEventListener('click',()=>{years=Number(btn.dataset.years);calc()});
 for(const btn of document.querySelectorAll('[data-amt]'))btn.addEventListener('click',()=>{$('fund').value=btn.dataset.amt;calc()});
 $('print').addEventListener('click',()=>window.print());
